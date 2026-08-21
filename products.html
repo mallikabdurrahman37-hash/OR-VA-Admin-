@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Products · ORÈVA Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <div id="shell-root"></div>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>Products</h1>
+        <p>Create, edit and manage every item in the ORÈVA catalogue.</p>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-primary" id="newProductBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          New product
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head" style="gap:10px;flex-wrap:wrap;">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" id="searchInput" placeholder="Search products by name or category…">
+        </div>
+        <div class="pill-row" id="filterPills">
+          <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="active">Active</button>
+          <button class="filter-pill" data-filter="inactive">Inactive</button>
+          <button class="filter-pill" data-filter="lowstock">Low stock</button>
+          <button class="filter-pill" data-filter="featured">Featured</button>
+        </div>
+      </div>
+      <div class="table-wrap responsive-table" id="productsWrap">
+        <div class="loader"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Product editor modal -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3 id="modalTitle">New product</h3>
+      <button class="modal-close" id="closeModalBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="productForm">
+        <div class="field">
+          <label for="pName">Product name</label>
+          <input type="text" id="pName" required placeholder="Classic Linen Shirt">
+        </div>
+        <div class="field">
+          <label for="pDescription">Description</label>
+          <textarea id="pDescription" required placeholder="A clean, relaxed piece made for everyday wear."></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="pCategory">Category</label>
+            <input type="text" id="pCategory" required placeholder="shirts">
+          </div>
+          <div class="field">
+            <label for="pSizes">Sizes (comma separated)</label>
+            <input type="text" id="pSizes" placeholder="S, M, L, XL">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="pPrice">Price (₹)</label>
+            <input type="number" id="pPrice" min="0" required placeholder="1299">
+          </div>
+          <div class="field">
+            <label for="pCompareAtPrice">Compare-at price (₹)</label>
+            <input type="number" id="pCompareAtPrice" min="0" placeholder="1599">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="pStock">Stock quantity</label>
+            <input type="number" id="pStock" min="0" required placeholder="24">
+          </div>
+          <div class="field">
+            <label for="pShipping">Shipping charge (₹, 0 = free)</label>
+            <input type="number" id="pShipping" min="0" placeholder="0">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Product images (1–5)</label>
+          <div class="upload-zone" id="uploadZone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+            <strong>Click to upload</strong>
+            <span>JPG or PNG · up to 5 images</span>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" multiple hidden>
+          <div class="image-strip" id="imageStrip"></div>
+          <p class="hint">The first image is used as the primary image on the storefront. Drag isn't required — remove and re-add to reorder.</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="checkbox-row" style="margin-bottom:10px;">
+          <input type="checkbox" id="pFeatured">
+          <label for="pFeatured">Featured on storefront</label>
+        </div>
+        <div class="checkbox-row" style="margin-bottom:10px;">
+          <input type="checkbox" id="pBestSeller">
+          <label for="pBestSeller">Mark as best seller</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="pIsActive" checked>
+          <label for="pIsActive">Active (visible to customers)</label>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="deleteProductBtn" style="display:none;margin-right:auto;">Delete</button>
+      <button class="btn btn-ghost" id="cancelModalBtn">Cancel</button>
+      <button class="btn btn-primary" id="saveProductBtn">Save product</button>
+    </div>
+  </div>
+</div>
+
+  <script type="module" src="js/products.js"></script>
+</body>
+</html>

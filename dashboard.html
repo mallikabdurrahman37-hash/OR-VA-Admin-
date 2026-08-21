@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard · ORÈVA Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <div id="shell-root"></div>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>Dashboard</h1>
+        <p>A live snapshot of ORÈVA's orders, catalogue and store health.</p>
+      </div>
+      <div class="page-actions">
+        <a href="orders.html" class="btn btn-ghost">View all orders</a>
+        <a href="products.html" class="btn btn-primary">Manage products</a>
+      </div>
+    </div>
+
+    <div id="storeNotice"></div>
+
+    <div class="stat-grid" id="statGrid">
+      <div class="stat-card"><div class="skeleton" style="height:60px;"></div></div>
+      <div class="stat-card"><div class="skeleton" style="height:60px;"></div></div>
+      <div class="stat-card"><div class="skeleton" style="height:60px;"></div></div>
+      <div class="stat-card"><div class="skeleton" style="height:60px;"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Recent orders</h2>
+        <a href="orders.html" class="btn btn-ghost btn-sm">View all</a>
+      </div>
+      <div class="table-wrap responsive-table" id="recentOrdersWrap">
+        <div class="loader"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

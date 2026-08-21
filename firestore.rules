@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// ORÈVA — Firestore Security Rules
+// -----------------------------------------------------------------------
+// IMPORTANT: The database.zip screenshots supplied for this build did not
+// include a screenshot of the Rules tab, so the exact current rule text for
+// `projects`, `users` and `visitor_ids` could not be read and preserved
+// verbatim. The rules below are a safe, conservative baseline that matches
+// the behaviour described in the master spec (admin-only writes to
+// products/orders/settings, self-managed user docs, anonymous-visitor
+// friendly `visitor_ids`). Before deploying, open the Rules tab in the
+// Firebase console and merge this with whatever is already live — do not
+// blindly overwrite existing rules for `projects`, `users` or `visitor_ids`.
+// -----------------------------------------------------------------------
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The one Gmail address allowed to act as admin. Client-side checks in
+    // this app are a UX convenience only — this function is the real
+    // authorization boundary.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'mallikabdurrahman37@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ---------------- products ----------------
+    // Public catalogue: anyone can read; only the admin can write.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ---------------- orders ----------------
+    // A customer can read/create their own orders. Only the admin can
+    // update status/courier/tracking, and cancellation is only permitted
+    // (by the admin panel) before the order has shipped.
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+        || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAdmin()
+        || (
+          // Customer-initiated cancellation, only while still pre-shipment.
+          isSignedIn()
+          && resource.data.userId == request.auth.uid
+          && resource.data.cancelled == false
+          && !(resource.data.orderStatus in ['Shipped', 'Out for Delivery', 'Delivered'])
+          && request.resource.data.cancelled == true
+          && request.resource.data.orderStatus == 'Cancelled'
+        );
+      allow delete: if false;
+    }
+
+    // ---------------- settings ----------------
+    // Single `store` document. Publicly readable (storefront needs it),
+    // only the admin can write. No other documents should exist here.
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin() && docId == 'store';
+    }
+
+    // ---------------- users ----------------
+    // Preserve existing behaviour: a user manages only their own profile
+    // document; the admin can read all profiles for fulfilment, never
+    // passwords (Firebase Auth owns credentials, never stored here).
+    match /users/{uid} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+      allow write: if isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ---------------- visitor_ids ----------------
+    // Preserve existing behaviour: created by the frontend anonymous-visitor
+    // flow; expects visitorId + authUid. Not manually seeded.
+    match /visitor_ids/{docId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow write: if isSignedIn() && request.resource.data.authUid == request.auth.uid;
+    }
+
+    // ---------------- projects ----------------
+    // Preserved as its own collection per the existing schema — confirm
+    // exact intended behaviour against the current console rules before
+    // deploying, since no rules screenshot was available for this build.
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

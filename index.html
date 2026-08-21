@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sign in · ORÈVA Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img src="assets/logo.png" alt="ORÈVA" style="width:52px;height:52px;object-fit:contain;margin-bottom:14px;"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+        <div class="brand-mark" style="display:none;">O</div>
+        <h1>ORÈVA</h1>
+        <p>Private Admin Panel</p>
+      </div>
+
+      <div class="auth-error" id="authError"></div>
+
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">Admin email</label>
+          <input type="email" id="email" autocomplete="username" placeholder="you@example.com" required>
+        </div>
+        <div class="field" style="margin-bottom:20px;">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;" id="submitBtn">
+          Sign in
+        </button>
+      </form>
+
+      <p class="auth-footnote">
+        This console is restricted to ORÈVA's store owner.<br>
+        Access is verified by Firebase Authentication and Firestore rules — not by this URL.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Optional background: use assets/bg.png if it loads; otherwise keep the
+    // CSS solid/gradient fallback already applied to .auth-shell. No broken
+    // image icon or visual gap is ever shown.
+    (function () {
+      var img = new Image();
+      img.onload = function () {
+        document.querySelector('.auth-shell').style.backgroundImage =
+          "linear-gradient(rgba(239,237,230,.86), rgba(239,237,230,.86)), url('assets/bg.png')";
+        document.querySelector('.auth-shell').style.backgroundSize = 'cover';
+        document.querySelector('.auth-shell').style.backgroundPosition = 'center';
+      };
+      img.src = 'assets/bg.png';
+    })();
+  </script>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

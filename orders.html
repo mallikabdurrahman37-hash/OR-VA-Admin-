@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orders · ORÈVA Admin</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app-shell">
+  <div id="shell-root"></div>
+
+  <main class="main">
+    <div class="page-head">
+      <div>
+        <h1>Orders</h1>
+        <p>Track, update and fulfil every ORÈVA order — Cash on Delivery only.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head" style="gap:10px;flex-wrap:wrap;">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="search" id="searchInput" placeholder="Search by customer, order ID or phone…">
+        </div>
+        <div class="pill-row" id="filterPills">
+          <button class="filter-pill active" data-filter="all">All</button>
+          <button class="filter-pill" data-filter="Placed">Placed</button>
+          <button class="filter-pill" data-filter="Confirmed">Confirmed</button>
+          <button class="filter-pill" data-filter="Processing">Processing</button>
+          <button class="filter-pill" data-filter="Shipped">Shipped</button>
+          <button class="filter-pill" data-filter="Out for Delivery">Out for delivery</button>
+          <button class="filter-pill" data-filter="Delivered">Delivered</button>
+          <button class="filter-pill" data-filter="Cancelled">Cancelled</button>
+        </div>
+      </div>
+      <div class="table-wrap responsive-table" id="ordersWrap">
+        <div class="loader"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Order detail modal -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3 id="orderModalTitle">Order</h3>
+      <button class="modal-close" id="closeOrderModalBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="orderModalBody">
+      <div class="loader"></div>
+    </div>
+    <div class="modal-foot" id="orderModalFoot"></div>
+  </div>
+</div>
+
+  <script type="module" src="js/orders.js"></script>
+</body>
+</html>
