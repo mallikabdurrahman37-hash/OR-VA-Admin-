@@ -12,6 +12,8 @@ const SHIPPED_OR_LATER = new Set(["Shipped", "Out for Delivery", "Delivered"]);
 let allOrders = [];
 let activeFilter = "all";
 let searchTerm = "";
+let activeVerification = "all";
+let verifyInFlight = false;
 let currentOrderId = null;
 
 const wrap = document.getElementById("ordersWrap");
@@ -40,15 +42,36 @@ function statusOf(o) {
   return o.cancelled ? "Cancelled" : (o.orderStatus || "Placed");
 }
 
+/* ---- WhatsApp verification (separate from fulfilment orderStatus) ---- */
+function verificationOf(o) {
+  if (o.verificationStatus === "pending_verification") return "pending_verification";
+  if (o.verificationStatus === "confirmed") return "confirmed";
+  return "not_recorded"; // field missing or unrecognised: never assume pending/confirmed
+}
+const VERIFICATION_META = {
+  pending_verification: { label: "Pending Verification", cls: "badge-processing" },
+  confirmed: { label: "Verification Confirmed", cls: "badge-delivered" },
+  not_recorded: { label: "Not Recorded", cls: "badge-placed" },
+};
+function verificationBadge(o) {
+  const m = VERIFICATION_META[verificationOf(o)];
+  return `<span class="badge ${m.cls}">${m.label}</span>`;
+}
+function publicOrderNumber(o) {
+  return o.orderNumber ? String(o.orderNumber) : "";
+}
+
 function renderOrders() {
   const term = searchTerm.trim().toLowerCase();
   const list = allOrders.filter((o) => {
     const status = statusOf(o);
     if (activeFilter !== "all" && status !== activeFilter) return false;
+    if (activeVerification !== "all" && verificationOf(o) !== activeVerification) return false;
     if (!term) return true;
     return (o.customerName || "").toLowerCase().includes(term)
       || (o.phone || "").toLowerCase().includes(term)
-      || o.id.toLowerCase().includes(term);
+      || o.id.toLowerCase().includes(term)
+      || publicOrderNumber(o).toLowerCase().includes(term);
   });
 
   if (!list.length) {
@@ -60,12 +83,13 @@ function renderOrders() {
     const status = statusOf(o);
     return `
     <tr class="clickable" data-open="${o.id}">
-      <td class="cell-strong">#${o.id.slice(-8).toUpperCase()}</td>
+      <td class="cell-strong">#${o.id.slice(-8).toUpperCase()}${publicOrderNumber(o) ? `<div class="cell-muted">${escapeHtml(publicOrderNumber(o))}</div>` : ""}</td>
       <td>${escapeHtml(o.customerName || "—")}<div class="cell-muted">${escapeHtml(o.phone || "")}</div></td>
       <td>${formatDate(o.orderDate)}</td>
       <td>${(o.items || []).length} item${(o.items || []).length === 1 ? "" : "s"}</td>
       <td>${formatINR(o.totalAmount)}</td>
       <td><span class="badge ${statusBadgeClass(status)}">${escapeHtml(status)}</span></td>
+      <td>${verificationBadge(o)}</td>
     </tr>`;
   }).join("");
 
@@ -75,13 +99,15 @@ function renderOrders() {
     <div class="mc-card" data-open="${o.id}">
       <div class="mc-row"><span class="mc-title">#${o.id.slice(-8).toUpperCase()}</span><span class="badge ${statusBadgeClass(status)}">${escapeHtml(status)}</span></div>
       <div class="mc-row"><span class="mc-sub">${escapeHtml(o.customerName || "—")}</span><span class="cell-strong">${formatINR(o.totalAmount)}</span></div>
+      ${publicOrderNumber(o) ? `<div class="mc-row"><span class="mc-sub">Order no.</span><span class="mc-sub">${escapeHtml(publicOrderNumber(o))}</span></div>` : ""}
       <div class="mc-row"><span class="mc-sub">${formatDate(o.orderDate)}</span><span class="mc-sub">${(o.items || []).length} items</span></div>
+      <div class="mc-row"><span class="mc-sub">WhatsApp verification</span>${verificationBadge(o)}</div>
     </div>`;
   }).join("");
 
   wrap.innerHTML = `
     <table>
-      <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+      <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th><th>WhatsApp verification</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div class="mobile-cards">${cards}</div>`;
@@ -99,9 +125,18 @@ document.getElementById("searchInput").addEventListener("input", debounce((e) =>
 document.getElementById("filterPills").addEventListener("click", (e) => {
   const btn = e.target.closest(".filter-pill");
   if (!btn) return;
-  document.querySelectorAll(".filter-pill").forEach((p) => p.classList.remove("active"));
+  document.querySelectorAll("#filterPills .filter-pill").forEach((p) => p.classList.remove("active"));
   btn.classList.add("active");
   activeFilter = btn.dataset.filter;
+  renderOrders();
+});
+
+document.getElementById("verificationPills").addEventListener("click", (e) => {
+  const btn = e.target.closest(".filter-pill");
+  if (!btn) return;
+  document.querySelectorAll("#verificationPills .filter-pill").forEach((p) => p.classList.remove("active"));
+  btn.classList.add("active");
+  activeVerification = btn.dataset.vfilter;
   renderOrders();
 });
 
@@ -173,7 +208,7 @@ function renderOrderDetail(o) {
   const itemsHtml = Array.isArray(items) && items.length && typeof items[0] === "object"
     ? items.map((it) => `
       <div class="mc-row" style="padding:8px 0;border-bottom:1px solid var(--line);">
-        <span>${escapeHtml(it.name || it.productId || "Item")} ${it.quantity ? `× ${it.quantity}` : ""}</span>
+        <span>${escapeHtml(it.name || it.productId || "Item")}${it.size ? ` <span class="cell-muted">(Size: ${escapeHtml(it.size)})</span>` : ""} ${(it.qty ?? it.quantity) ? `× ${escapeHtml(it.qty ?? it.quantity)}` : ""}</span>
         <span class="cell-strong">${it.price != null ? formatINR(it.price) : ""}</span>
       </div>`).join("")
     : `<p class="text-muted">Item details unavailable in a structured format for this order.</p>`;
@@ -202,6 +237,13 @@ function renderOrderDetail(o) {
 
     <div class="divider"></div>
 
+    <h4 style="font-size:14px;margin-bottom:8px;">Order identifiers</h4>
+    <div style="margin-bottom:14px;">
+      <div class="mc-row"><span class="cell-muted">Public order number</span><span class="cell-strong">${publicOrderNumber(o) ? escapeHtml(publicOrderNumber(o)) : "—"}</span></div>
+      <div class="mc-row"><span class="cell-muted">Order ID</span><span>#${o.id.slice(-8).toUpperCase()}</span></div>
+      <div class="mc-row"><span class="cell-muted">Firestore document ID</span><span class="cell-muted" style="word-break:break-all;">${escapeHtml(o.id)}</span></div>
+    </div>
+
     <h4 style="font-size:14px;margin-bottom:8px;">Items</h4>
     ${itemsHtml}
     <div style="margin-top:10px;padding-top:10px;">
@@ -212,6 +254,18 @@ function renderOrderDetail(o) {
       <div class="mc-row"><span class="cell-muted">Order date</span><span>${formatDateTime(o.orderDate)}</span></div>
       <div class="mc-row"><span class="cell-muted">Expected delivery</span><span>${formatDate(o.expectedDelivery)}</span></div>
     </div>
+
+    <div class="divider"></div>
+
+    <h4 style="font-size:14px;margin-bottom:8px;">WhatsApp Verification</h4>
+    <div class="mc-row" style="margin-bottom:8px;"><span class="cell-muted">Verification status</span>${verificationBadge(o)}</div>
+    ${verificationOf(o) === "pending_verification" ? `
+      <p class="hint" style="margin:0 0 10px;">Only mark this as confirmed after you have actually received the customer's WhatsApp message and matched its order number (${escapeHtml(publicOrderNumber(o) || "#" + o.id.slice(-8).toUpperCase())}) to this order. This does not change the fulfilment stage.</p>
+      <button class="btn btn-primary" id="markVerifiedBtn">Mark Verification Confirmed</button>`
+    : verificationOf(o) === "confirmed" ? `
+      <p class="hint" style="margin:0;">WhatsApp verification has been confirmed for this order.</p>`
+    : `
+      <p class="hint" style="margin:0;">No verification state is recorded for this order (it may predate the WhatsApp verification workflow). Nothing has been assumed.</p>`}
 
     <div class="divider"></div>
 
@@ -261,6 +315,7 @@ function renderOrderDetail(o) {
   document.getElementById("saveStatusBtn")?.addEventListener("click", () => saveStatus(o));
   document.getElementById("saveFulfilmentBtn")?.addEventListener("click", () => saveFulfilment(o));
   document.getElementById("cancelOrderBtn")?.addEventListener("click", () => cancelOrder(o));
+  document.getElementById("markVerifiedBtn")?.addEventListener("click", () => markVerificationConfirmed(o));
   document.getElementById("copyTrackingBtn")?.addEventListener("click", () => {
     const val = document.getElementById("trackingInput").value;
     if (!val) { toast("No tracking ID to copy yet.", "error"); return; }
@@ -305,6 +360,33 @@ async function saveStatus(o) {
   } finally {
     btn.disabled = false;
     btn.textContent = "Save status";
+  }
+}
+
+async function markVerificationConfirmed(o) {
+  if (verifyInFlight) return;
+  if (verificationOf(o) !== "pending_verification") return;
+  if (!confirm("Have you received the customer's WhatsApp verification message and matched the order number? Only continue if the message has actually been received.")) return;
+
+  const btn = document.getElementById("markVerifiedBtn");
+  verifyInFlight = true;
+  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+  try {
+    // Only the verification field is written; orderStatus and all other fields are untouched.
+    await updateDoc(doc(db, "orders", o.id), { verificationStatus: "confirmed" });
+    // Local state is updated only after Firestore has accepted the write.
+    o.verificationStatus = "confirmed";
+    const idx = allOrders.findIndex((x) => x.id === o.id);
+    if (idx > -1) allOrders[idx] = { ...allOrders[idx], verificationStatus: "confirmed" };
+    toast("WhatsApp verification marked as confirmed.", "success");
+    if (currentOrderId === o.id) renderOrderDetail(o);
+    renderOrders();
+  } catch (e) {
+    toast("Couldn't confirm verification: " + e.message, "error");
+    const again = document.getElementById("markVerifiedBtn");
+    if (again) { again.disabled = false; again.textContent = "Mark Verification Confirmed"; }
+  } finally {
+    verifyInFlight = false;
   }
 }
 
