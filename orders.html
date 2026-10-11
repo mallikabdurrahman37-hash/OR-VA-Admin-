@@ -23,7 +23,7 @@
       <div class="card-head" style="gap:10px;flex-wrap:wrap;">
         <div class="search-bar">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input type="search" id="searchInput" placeholder="Search by customer, order ID or phone…">
+          <input type="search" id="searchInput" placeholder="Search by customer, order number, order ID or phone…">
         </div>
         <div class="pill-row" id="filterPills">
           <button class="filter-pill active" data-filter="all">All</button>
@@ -34,6 +34,12 @@
           <button class="filter-pill" data-filter="Out for Delivery">Out for delivery</button>
           <button class="filter-pill" data-filter="Delivered">Delivered</button>
           <button class="filter-pill" data-filter="Cancelled">Cancelled</button>
+        </div>
+        <div class="pill-row" id="verificationPills" aria-label="WhatsApp verification filter">
+          <button class="filter-pill active" data-vfilter="all">All verification</button>
+          <button class="filter-pill" data-vfilter="pending_verification">Pending Verification</button>
+          <button class="filter-pill" data-vfilter="confirmed">Verification Confirmed</button>
+          <button class="filter-pill" data-vfilter="not_recorded">Not Recorded</button>
         </div>
       </div>
       <div class="table-wrap responsive-table" id="ordersWrap">
